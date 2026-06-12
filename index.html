@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tierhaltung Lernplattform – QB Praktische Prüfung</title>
+<style>
+  :root {
+    --erde: #3B2F1E;
+    --heu: #C8A95A;
+    --gras: #4A6741;
+    --himmel: #6B9BAA;
+    --milch: #F4F0E8;
+    --schatten: rgba(59,47,30,0.12);
+    --radius: 10px;
+    --font-display: 'Georgia', 'Times New Roman', serif;
+    --font-body: 'Helvetica Neue', 'Arial', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--milch);
+    color: var(--erde);
+    font-family: var(--font-body);
+    font-size: 15px;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  /* NAV */
+  nav {
+    background: var(--erde);
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 8px var(--schatten);
+  }
+  .nav-brand {
+    font-family: var(--font-display);
+    font-size: 1.05rem;
+    color: var(--heu);
+    padding: 14px 0;
+    margin-right: auto;
+    letter-spacing: 0.02em;
+  }
+  .nav-btn {
+    background: none;
+    border: none;
+    color: var(--milch);
+    font-family: var(--font-body);
+    font-size: 0.85rem;
+    padding: 8px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.2s;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+  }
+  .nav-btn:hover, .nav-btn.active {
+    background: var(--heu);
+    color: var(--erde);
+    font-weight: 700;
+  }
+
+  /* HERO */
+  .hero {
+    background: linear-gradient(135deg, var(--gras) 0%, var(--erde) 100%);
+    color: var(--milch);
+    padding: 48px 24px 40px;
+    text-align: center;
+  }
+  .hero h1 {
+    font-family: var(--font-display);
+    font-size: clamp(1.6rem, 4vw, 2.4rem);
+    font-weight: normal;
+    letter-spacing: -0.01em;
+    margin-bottom: 10px;
+  }
+  .hero p {
+    font-size: 0.95rem;
+    opacity: 0.82;
+    max-width: 540px;
+    margin: 0 auto;
+  }
+  .badge-row {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 18px;
+    flex-wrap: wrap;
+  }
+  .badge {
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 20px;
+    padding: 4px 14px;
+    font-size: 0.78rem;
+    letter-spacing: 0.04em;
+  }
+
+  /* VIEWS */
+  .view { display: none; padding: 28px 16px 60px; max-width: 900px; margin: 0 auto; }
+  .view.active { display: block; }
+
+  /* CATEGORY FILTER */
+  .filter-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 22px;
+  }
+  .filter-btn {
+    background: white;
+    border: 1.5px solid #ddd;
+    border-radius: 20px;
+    padding: 5px 14px;
+    font-size: 0.82rem;
+    cursor: pointer;
+    transition: all 0.18s;
+    font-family: var(--font-body);
+    color: var(--erde);
+  }
+  .filter-btn:hover { border-color: var(--heu); }
+  .filter-btn.active { background: var(--erde); color: var(--milch); border-color: var(--erde); }
+
+  /* LERNKARTEN */
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+    gap: 16px;
+  }
+  .card {
+    background: white;
+    border-radius: var(--radius);
+    box-shadow: 0 2px 10px var(--schatten);
+    cursor: pointer;
+    perspective: 1000px;
+    height: 200px;
+    transition: transform 0.18s, box-shadow 0.18s;
+  }
+  .card:hover { transform: translateY(-3px); box-shadow: 0 6px 20px var(--schatten); }
+  .card-inner {
+    width: 100%; height: 100%;
+    transition: transform 0.45s cubic-bezier(.4,0,.2,1);
+    transform-style: preserve-3d;
+    position: relative;
+  }
+  .card.flipped .card-inner { transform: rotateY(180deg); }
+  .card-front, .card-back {
+    position: absolute;
+    inset: 0;
+    backface-visibility: hidden;
+    border-radius: var(--radius);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .card-front {
+    background: white;
+  }
+  .card-back {
+    background: var(--erde);
+    color: var(--milch);
+    transform: rotateY(180deg);
+  }
+  .card-cat {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--gras);
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+  .card-front .card-cat { color: var(--gras); }
+  .card-back .card-cat { color: var(--heu); }
+  .card-q {
+    font-size: 0.9rem;
+    font-weight: 600;
+    line-height: 1.45;
+    color: var(--erde);
+  }
+  .card-a {
+    font-size: 0.88rem;
+    line-height: 1.5;
+    color: var(--milch);
+  }
+  .card-hint {
+    margin-top: auto;
+    font-size: 0.72rem;
+    opacity: 0.5;
+    text-align: center;
+  }
+  .cards-count {
+    font-size: 0.85rem;
+    color: #888;
+    margin-bottom: 14px;
+  }
+
+  /* QUIZ */
+  .quiz-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .quiz-progress-bar {
+    height: 6px;
+    background: #e8e2d8;
+    border-radius: 3px;
+    margin-bottom: 24px;
+    overflow: hidden;
+  }
+  .quiz-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--gras), var(--heu));
+    border-radius: 3px;
+    transition: width 0.4s ease;
+  }
+  .quiz-q-num {
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #888;
+  }
+  .quiz-score-live {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: var(--gras);
+  }
+  .quiz-card {
+    background: white;
+    border-radius: var(--radius);
+    box-shadow: 0 2px 14px var(--schatten);
+    padding: 28px 24px;
+    margin-bottom: 18px;
+  }
+  .quiz-cat-tag {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--gras);
+    font-weight: 700;
+    margin-bottom: 12px;
+  }
+  .quiz-question {
+    font-size: 1.05rem;
+    font-weight: 600;
+    line-height: 1.5;
+    color: var(--erde);
+    margin-bottom: 22px;
+  }
+  .quiz-options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .quiz-opt {
+    background: var(--milch);
+    border: 1.5px solid #ddd;
+    border-radius: 8px;
+    padding: 12px 16px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    text-align: left;
+    font-family: var(--font-body);
+    color: var(--erde);
+    transition: all 0.18s;
+    line-height: 1.4;
+  }
+  .quiz-opt:hover:not(:disabled) { border-color: var(--heu); background: #fdf8ee; }
+  .quiz-opt.correct { background: #eaf4ea; border-color: var(--gras); color: var(--gras); font-weight: 600; }
+  .quiz-opt.wrong { background: #fdf0f0; border-color: #c0392b; color: #c0392b; }
+  .quiz-opt:disabled { cursor: default; }
+  .quiz-feedback {
+    margin-top: 14px;
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 0.88rem;
+    line-height: 1.5;
+    display: none;
+  }
+  .quiz-feedback.show { display: block; }
+  .quiz-feedback.ok { background: #eaf4ea; color: var(--gras); border-left: 3px solid var(--gras); }
+  .quiz-feedback.nope { background: #fdf0f0; color: #c0392b; border-left: 3px solid #c0392b; }
+  .quiz-nav {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 18px;
+  }
+  .btn-primary {
+    background: var(--erde);
+    color: var(--milch);
+    border: none;
+    border-radius: 8px;
+    padding: 10px 24px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    font-family: var(--font-body);
+    transition: background 0.18s;
+    letter-spacing: 0.02em;
+  }
+  .btn-primary:hover { background: var(--gras); }
+  .btn-secondary {
+    background: white;
+    color: var(--erde);
+    border: 1.5px solid #ccc;
+    border-radius: 8px;
+    padding: 10px 22px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    font-family: var(--font-body);
+    transition: all 0.18s;
+    margin-right: 10px;
+  }
+  .btn-secondary:hover { border-color: var(--erde); }
+
+  /* RESULT */
+  .result-box {
+    background: white;
+    border-radius: var(--radius);
+    box-shadow: 0 2px 14px var(--schatten);
+    padding: 40px 28px;
+    text-align: center;
+  }
+  .result-score {
+    font-family: var(--font-display);
+    font-size: 3.5rem;
+    color: var(--gras);
+    line-height: 1;
+    margin-bottom: 8px;
+  }
+  .result-label {
+    font-size: 0.9rem;
+    color: #888;
+    margin-bottom: 24px;
+  }
+  .result-note {
+    font-size: 1rem;
+    line-height: 1.6;
+    color: var(--erde);
+    margin-bottom: 28px;
+    max-width: 420px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .result-cats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+    margin-bottom: 28px;
+  }
+  .result-cat-chip {
+    border-radius: 20px;
+    padding: 5px 14px;
+    font-size: 0.8rem;
+    border: 1.5px solid;
+  }
+  .result-cat-chip.good { border-color: var(--gras); color: var(--gras); background: #eaf4ea; }
+  .result-cat-chip.mid { border-color: var(--heu); color: #7a6020; background: #fdf8ee; }
+  .result-cat-chip.low { border-color: #c0392b; color: #c0392b; background: #fdf0f0; }
+
+  /* SECTION TITLE */
+  .section-title {
+    font-family: var(--font-display);
+    font-size: 1.3rem;
+    color: var(--erde);
+    margin-bottom: 6px;
+  }
+  .section-sub {
+    font-size: 0.85rem;
+    color: #888;
+    margin-bottom: 20px;
+  }
+
+  @media (max-width: 520px) {
+    nav { padding: 0 10px; gap: 4px; }
+    .nav-btn { padding: 6px 9px; font-size: 0.75rem; }
+    .hero { padding: 32px 16px 28px; }
+    .quiz-card { padding: 20px 16px; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <span class="nav-brand">🐄 Tierhaltung QB</span>
+  <button class="nav-btn active" onclick="showView('lernkarten')">Lernkarten</button>
+  <button class="nav-btn" onclick="showView('quiz')">Quiz</button>
+</nav>
+
+<div class="hero">
+  <h1>Tierhaltung – Prüfungsvorbereitung</h1>
+  <p>Lernkarten und Quiz zu allen Themen der praktischen Prüfung Landwirt/in EFZ QB 2025</p>
+  <div class="badge-row">
+    <span class="badge">Rindvieh</span>
+    <span class="badge">Schweine</span>
+    <span class="badge">Geflügel</span>
+    <span class="badge">Kleinwiederkäuer</span>
+    <span class="badge">Pferde</span>
+  </div>
+</div>
+
+<!-- LERNKARTEN -->
+<div id="view-lernkarten" class="view active">
+  <div class="section-title">Lernkarten</div>
+  <div class="section-sub">Karte anklicken zum Umdrehen</div>
+  <div class="filter-row" id="card-filters"></div>
+  <div class="cards-count" id="cards-count"></div>
+  <div class="cards-grid" id="cards-grid"></div>
+</div>
+
+<!-- QUIZ -->
+<div id="view-quiz" class="view">
+  <div id="quiz-setup">
+    <div class="section-title">Quiz starten</div>
+    <div class="section-sub">Wähle eine Kategorie oder prüfe alle Themen</div>
+    <div class="filter-row" id="quiz-filters"></div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:18px;">
+      <button class="btn-primary" onclick="startQuiz()">Quiz starten →</button>
+    </div>
+  </div>
+  <div id="quiz-active" style="display:none;">
+    <div class="quiz-header">
+      <span class="quiz-q-num" id="qnum">Frage 1 / 10</span>
+      <span class="quiz-score-live" id="qlive">0 / 0</span>
+    </div>
+    <div class="quiz-progress-bar"><div class="quiz-progress-fill" id="qprogress"></div></div>
+    <div class="quiz-card">
+      <div class="quiz-cat-tag" id="qcat"></div>
+      <div class="quiz-question" id="qquestion"></div>
+      <div class="quiz-options" id="qoptions"></div>
+      <div class="quiz-feedback" id="qfeedback"></div>
+    </div>
+    <div class="quiz-nav">
+      <button class="btn-secondary" onclick="endQuiz()">Abbrechen</button>
+      <button class="btn-primary" id="qnext" onclick="nextQuestion()" style="display:none;">Nächste Frage →</button>
+    </div>
+  </div>
+  <div id="quiz-result" style="display:none;">
+    <div class="result-box">
+      <div class="result-score" id="rscore"></div>
+      <div class="result-label" id="rlabel"></div>
+      <div class="result-note" id="rnote"></div>
+      <div class="result-cats" id="rcats"></div>
+      <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+        <button class="btn-secondary" onclick="showView('lernkarten')">Lernkarten</button>
+        <button class="btn-primary" onclick="startQuiz()">Nochmals →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// DATA – LERNKARTEN & QUIZFRAGEN
+// ============================================================
+const data = [
+
+// --- RINDVIEH: ALLGEMEIN & GESUNDHEIT ---
+{ cat: "Rindvieh", sub: "Gesundheit",
+  q: "Was sind die wichtigsten Parameter zur Beurteilung der Vitalität eines Kalbes?",
+  a: "Tierverhalten/Ohrenspiel, Augen/Nase/Sekrete, Sauberkeit/Fell, Temperatur (38,5–39,5 °C), Atmung, Nabel.",
+  opts: ["Nur Körpertemperatur messen","Tierverhalten, Ohrenspiel, Augen, Nase, Temperatur, Atmung, Nabel","Ausschliesslich Gewicht und Grösse","Farbe der Klauen und Schulterhöhe"]
+},
+{ cat: "Rindvieh", sub: "Gesundheit",
+  q: "Welche Normaltemperatur hat eine gesunde Kuh?",
+  a: "38,5–39,2 °C. Abweichungen nach oben deuten auf Fieber hin.",
+  opts: ["37,0–37,8 °C","38,5–39,2 °C","40,0–41,0 °C","36,5–37,5 °C"]
+},
+{ cat: "Rindvieh", sub: "Gesundheit",
+  q: "Was bedeutet 'Knietest' bei der Beurteilung von Liegeflächen?",
+  a: "Man kniet kurz auf die Liegefläche: Sie soll trocken, weich und sauber sein, damit die Kuh komfortabel liegen kann.",
+  opts: ["Man misst die Liegefläche mit dem Knie aus","Man prüft durch kurzes Knien, ob die Fläche trocken, weich und sauber ist","Man beurteilt die Kniehöhe der Trennbügel","Man testet die Trittsicherheit mit dem Knie"]
+},
+{ cat: "Rindvieh", sub: "Gesundheit",
+  q: "Was ist der Schalmtest und wozu dient er?",
+  a: "Ein einfacher Vororttest zur Erkennung von Mastitis (erhöhte Zellzahl). Milch wird mit Reagenz gemischt; Gelinken zeigt Euterentzündung an.",
+  opts: ["Bluttest für Trächtigkeitsnachweis","Schnelltest für erhöhte Zellzahl/Mastitis in der Milch","Futtermittelanalyse im Stall","Test auf Brucellose"]
+},
+{ cat: "Rindvieh", sub: "Gesundheit",
+  q: "Was sind typische Anzeichen einer bevorstehenden Geburt bei der Kuh?",
+  a: "Eingefallene Bänder, geschwollene/vergrösserte Scheide, 'Aufeutern', isoliertes/nervöses Verhalten, Treten mit den Füssen.",
+  opts: ["Ruhiges Fressen und Stehen im Stall","Eingefallene Bänder, geschwollene Scheide, Aufeutern, nervöses Verhalten","Starkes Wiederkäuen und Schlafen","Vermehrte Wasseraufnahme und Husten"]
+},
+
+// --- RINDVIEH: FÜTTERUNG ---
+{ cat: "Rindvieh", sub: "Fütterung",
+  q: "Warum muss Kolostrum innerhalb der ersten 2 Stunden nach der Geburt verabreicht werden?",
+  a: "Der Darm des Kalbes ist nur kurz durchlässig für die grossen Antikörpermoleküle des Kolostrums. Nach ca. 12–24 h ist die Absorption stark reduziert.",
+  opts: ["Weil Kolostrum danach schlecht wird","Weil der Darm nur kurz für Antikörper durchlässig ist","Weil das Kalb danach satt ist","Weil der Bauer dann Feierabend hat"]
+},
+{ cat: "Rindvieh", sub: "Fütterung",
+  q: "Wie viel Kolostrum benötigt ein neugeborenes Kalb in den ersten 24 Stunden?",
+  a: "Mindestens 2 Liter in den ersten 2 Stunden, insgesamt mindestens 10 % des Körpergewichts in 24 Stunden.",
+  opts: ["0,5 Liter reichen völlig","Mind. 2 l in den ersten 2 h, mind. 10 % des KGW in 24 h","Erst ab dem dritten Tag Kolostrum geben","5 Liter auf einmal"]
+},
+{ cat: "Rindvieh", sub: "Fütterung",
+  q: "Warum wird Raufutter an Kälber verfüttert?",
+  a: "Zur Entwicklung der Pansenmotorik und des Pansenvolumens.",
+  opts: ["Nur um Kosten zu sparen","Für Pansenentwicklung (Volumen und Motorik)","Um Kälber schneller zu mästen","Weil Kraftfutter zu teuer ist"]
+},
+{ cat: "Rindvieh", sub: "Fütterung",
+  q: "Warum erhält eine Milchkuh vor dem Abkalben weniger Calcium?",
+  a: "Um Milchfieber (Festliegen) zu verhindern: Reduziertes Ca ante partum hält den Ca-Mobilisierungsmechanismus aktiv.",
+  opts: ["Calcium ist für Kühe giftig","Um Milchfieber/Festliegen zu verhindern, weil die Mobilisierung aktiviert bleibt","Calcium verursacht Durchfall","Nur zur Kosteneinsparung"]
+},
+{ cat: "Rindvieh", sub: "Fütterung",
+  q: "Welche Tagesmilchmenge sollte ein Mastkälber-Automat maximal verabreichen?",
+  a: "Milch ad libitum, mit kontinuierlicher Erhöhung des Trockensubstanzgehalts bis ca. 3,3 kg TS/Kalb/Tag am Schluss; max. 160 Masttage.",
+  opts: ["1 Liter täglich","Ad libitum, kontinuierliche TS-Erhöhung bis ca. 3,3 kg TS/Tier/Tag","Unbegrenzt ohne Kontrolle","5 Liter Morgens, nichts Abends"]
+},
+
+// --- RINDVIEH: STALLKLIMA ---
+{ cat: "Rindvieh", sub: "Stallklima",
+  q: "Welche Mindestbeleuchtung wird im Kuhstall empfohlen?",
+  a: "Mindestens 15 Lux.",
+  opts: ["5 Lux","15 Lux","50 Lux","100 Lux"]
+},
+{ cat: "Rindvieh", sub: "Stallklima",
+  q: "In welchem Temperaturbereich sollte ein Kälberstall liegen?",
+  a: "5–20 °C, möglichst stabil ohne starke Schwankungen.",
+  opts: ["0–5 °C","5–20 °C","20–30 °C","Über 30 °C"]
+},
+{ cat: "Rindvieh", sub: "Stallklima",
+  q: "Was deutet Kondenswasserbildung an den Stallwänden an?",
+  a: "Zu hohe relative Luftfeuchtigkeit – die Lüftung muss verbessert werden.",
+  opts: ["Der Stall ist zu warm, alles ist normal","Zu hohe Luftfeuchtigkeit; Lüftung muss verbessert werden","Das Dach ist undicht","Es ist zu kalt"]
+},
+
+// --- RINDVIEH: MEDIKAMENTE ---
+{ cat: "Rindvieh", sub: "Medikamente",
+  q: "Was muss im Behandlungsjournal zwingend eingetragen werden?",
+  a: "Behandlungsdatum und -dauer, Freigabedatum, TVD-Nummer und Tiername, verwendetes Medikament.",
+  opts: ["Nur der Name des Tierarztes","Behandlungsdatum, Dauer, Freigabedatum, TVD-Nummer, Tier, Medikament","Nur die Diagnose","Nur das Ablaufdatum des Medikaments"]
+},
+{ cat: "Rindvieh", sub: "Medikamente",
+  q: "Warum sind Absetzfristen bei Antibiotika wichtig?",
+  a: "Um Antibiotikarückstände in Fleisch und Milch zu verhindern und die Qualitätsgarantie zu gewährleisten.",
+  opts: ["Sie sind nur für den Tierarzt relevant","Um Rückstände in Fleisch und Milch zu verhindern und Qualität zu sichern","Damit das Tier weniger frisst","Nur wegen der Kosten"]
+},
+{ cat: "Rindvieh", sub: "Medikamente",
+  q: "Wie muss ein Medikament korrekt gelagert werden?",
+  a: "Trocken, staubfrei, kindersicher, in der Originalverpackung, Ablaufdatum beachten, Lagertemperatur gemäss Packungsbeilage.",
+  opts: ["Einfach irgendwo im Stall","Trocken, kindersicher, Originalverpackung, Ablaufdatum beachten, Temp. gem. Beilage","Im Kühlschrank immer, egal was draufsteht","Offen in einem Eimer"]
+},
+
+// --- RINDVIEH: TRANSPORT ---
+{ cat: "Rindvieh", sub: "Transport",
+  q: "Was muss bei der Beschriftung eines Viehtransportanhängers angegeben sein?",
+  a: "Fläche in m², Hinweis «lebende Tiere», ggf. Beleuchtung und Markierung.",
+  opts: ["Nur der Name des Fahrers","Fläche in m², Hinweis «lebende Tiere», Beleuchtung, Markierung","Nur das Gewicht der Tiere","Nichts, das ist freiwillig"]
+},
+{ cat: "Rindvieh", sub: "Transport",
+  q: "Was enthält ein korrektes Begleitdokument beim Tierverkauf?",
+  a: "Information Käufer/Verkäufer, Tieridentität (TVD), Seuchenfreiheit, Gesundheitszustand (Behandlungsjournal), Informationen zum Transport.",
+  opts: ["Nur den Preis des Tieres","Käufer/Verkäufer-Info, Tieridentität, Seuchenfreiheit, Gesundheit, Transportinfos","Nur die Ohrmarkennummer","Gar nichts, ist nicht vorgeschrieben"]
+},
+
+// --- RINDVIEH: SCHLACHTUNG ---
+{ cat: "Rindvieh", sub: "Schlachtung",
+  q: "Was versteht man unter CHTAX bei der Beurteilung von Mastmuni?",
+  a: "Das Schweizer Klassifizierungssystem für Fleischigkeit: C=sehr gut bis X=ungenügend. Bewertet wird visuell am Nierstück und Stotzen.",
+  opts: ["Ein Fütterungsplan für Mastmuni","Schweizer Klassifizierung für Fleischigkeit (C bis X), beurteilt an Nierstück und Stotzen","Eine Rasse von Mastrindern","Ein Medikament gegen Klauenprobleme"]
+},
+{ cat: "Rindvieh", sub: "Schlachtung",
+  q: "Mit welchem System wird die Fettabdeckung beim Schlachttier beurteilt?",
+  a: "3-Punkte-System: Schwanzgriff, Rippengriff, Hüftgriff. Note 3 gilt als ideal.",
+  opts: ["Nur durch Augenschein","Schwanzgriff, Rippengriff, Hüftgriff – Note 3 ist ideal","Durch Wiegen der Nieren","Durch Bluttest"]
+},
+{ cat: "Rindvieh", sub: "Schlachtung",
+  q: "Was bedeutet das optimale Schlachtgewicht eines Mastmuni?",
+  a: "290–300 kg SG entsprechen ca. 530–550 kg Lebendgewicht. TZW ca. 1500 g/Tag.",
+  opts: ["100 kg SG ist optimal","290–300 kg SG = ca. 530–550 kg LG, TZW ca. 1500 g/Tag","500 kg SG sind das Ziel","Es gibt keine Vorgaben"]
+},
+
+// --- RINDVIEH: BRUNST & FORTPFLANZUNG ---
+{ cat: "Rindvieh", sub: "Fortpflanzung",
+  q: "Was ist das wichtigste Brunstkennzeichen bei der Kuh?",
+  a: "Das Dulden des Aufspringens (Stehbrunst) ist das sicherste Hauptbrunstkennzeichen.",
+  opts: ["Schleim am Schwanz","Dulden des Aufspringens (Stehbrunst)","Bellende Laute","Rötung der Augen"]
+},
+{ cat: "Rindvieh", sub: "Fortpflanzung",
+  q: "Wann ist der beste Zeitpunkt zur Besamung?",
+  a: "Ende der Hauptbrunst: Morgens stehendes Tier → abends besamen.",
+  opts: ["Am Anfang der Vorbrunst","Ende der Hauptbrunst: morgens stehend → abends besamen","Während der Nachbrunst","Jederzeit ist gleich gut"]
+},
+{ cat: "Rindvieh", sub: "Fortpflanzung",
+  q: "Wann darf frühestens nach der Geburt besamt werden?",
+  a: "Frühestens 6 Wochen nach der Geburt.",
+  opts: ["Sofort nach der Geburt","Frühestens nach 6 Wochen","Erst nach 6 Monaten","Nach 3 Tagen"]
+},
+
+// --- MILCHWIRTSCHAFT ---
+{ cat: "Milchwirtschaft", sub: "Melken",
+  q: "Was sind wichtige Qualitätsmerkmale der Rohmilch?",
+  a: "Milchlagertemperatur, Keimzahl, Zellzahl, Hemmstoffe (Antibiotikarückstände), Gefrierpunkt.",
+  opts: ["Nur Fettgehalt und Farbe","Milchlagertemperatur, Keimzahl, Zellzahl, Hemmstoffe, Gefrierpunkt","Nur der Eiweissgehalt","Geruch allein reicht"]
+},
+{ cat: "Milchwirtschaft", sub: "Melken",
+  q: "Was wird beim Schalmtest beurteilt?",
+  a: "Die Zellzahl der Milch; erhöhte Zellzahl deutet auf Mastitis hin. Laktationsstadium beeinflusst das Ergebnis.",
+  opts: ["Fettgehalt der Milch","Zellzahl – erhöht bei Mastitis. Laktationsstadium beachten","Bakterienzahl allein","Milchprotein"]
+},
+{ cat: "Milchwirtschaft", sub: "Melken",
+  q: "Was sind die Schritte beim Melken in der richtigen Reihenfolge?",
+  a: "Vormelken → Zitzen reinigen → korrektes Anhängen → Melkvorgang prüfen → Abhängen → Euterkontrolle → Zitzen tauchen → Hygienemasssnahmen.",
+  opts: ["Anhängen und fertig","Vormelken, Zitzen reinigen, Anhängen, Melkvorgang prüfen, Abhängen, Euterkontrolle, Tauchen","Zuerst tauchen, dann melken","Reihenfolge ist egal"]
+},
+{ cat: "Milchwirtschaft", sub: "Melken",
+  q: "Was sind Aufgaben des Melkroboters, die täglich kontrolliert werden müssen?",
+  a: "Durchschnittliche Melkungen/Kuh, Tagesmilchproduktion, Leitfähigkeit/Zellzahl, Körpertemperatur, Wiederkautätigkeit, Verweigerungen.",
+  opts: ["Nur ob die Maschine läuft","Melkungen/Kuh, Milchmenge, Leitfähigkeit, Körpertemp., Wiederkautätigkeit, Verweigerungen","Nur Milchmenge","Nur Leitfähigkeit"]
+},
+
+// --- SCHWEINE ---
+{ cat: "Schweine", sub: "Gesundheit",
+  q: "Welche Normaltemperatur hat ein Mastschwein?",
+  a: "Mastschwein: ca. 39,0 °C, Saugferkel: 39,5 °C, Sau: 38,8 °C. Ab 39,5 °C gilt Fieber.",
+  opts: ["37 °C für alle","Mast 39,0 °C, Ferkel 39,5 °C, Sau 38,8 °C – ab 39,5 °C Fieber","41 °C ist normal","Unter 38 °C"]
+},
+{ cat: "Schweine", sub: "Gesundheit",
+  q: "Was versteht man unter Biosicherheit im Schweinebetrieb?",
+  a: "Besucherjournal, klare Hygieneschleuse (Strassen-/Stallkleider), Schadnagerbekämpfung, Quarantäne zugekaufter Tiere.",
+  opts: ["Nur Desinfektionsmittel kaufen","Besucherjournal, Hygieneschleuse, Schadnagerbekämpfung, Quarantäne Zukauf","Türen immer geschlossen halten","Nur Impfungen"]
+},
+{ cat: "Schweine", sub: "Stallklima",
+  q: "Welche Stalltemperaturen gelten für verschiedene Schweinegruppen?",
+  a: "Galtsauen 9–23 °C, säugende Sauen 16–20 °C, Ferkel 22–33 °C, Mastschweine 16–22 °C.",
+  opts: ["Alle bei 20 °C","Galt 9–23°, Säugend 16–20°, Ferkel 22–33°, Mast 16–22 °C","Immer möglichst warm","Ferkel kalt, Sauen warm"]
+},
+{ cat: "Schweine", sub: "Stallklima",
+  q: "Wie erkennt man an der Liegepositon der Schweine, ob das Stallklima stimmt?",
+  a: "Seitenlage weit verteilt = angenehm warm. Haufenbildung = zu kalt. Auf den Läufen liegend = zu warm.",
+  opts: ["Liegeposition sagt nichts aus","Seitenlage verteilt=warm, Haufenbildung=kalt, Stehen=zu warm","Immer Haufenbildung ist normal","Wenn sie stehen ist alles gut"]
+},
+{ cat: "Schweine", sub: "Fütterung",
+  q: "Was bedeutet Mehrphasenfütterung bei Mastschweinen?",
+  a: "Angepasste Rationen in verschiedenen Mastphasen (Start, Vormast, Ausmast), um Nährstoffbedarf und Umweltbelastung zu optimieren.",
+  opts: ["Dreimal täglich füttern","Verschiedene Rationen je Mastphase (Start, Vor-, Ausmast) für Bedarf und Umwelt","Nur eine Futtersorte für alle","Zufütterung von Würmern"]
+},
+{ cat: "Schweine", sub: "Fütterung",
+  q: "Was versteht man unter Flushing bei Sauen?",
+  a: "Kurz vor und nach dem Absetzen wird die Fütterung intensiviert (ad libitum), um mehr Eizellen und eine bessere Brunst auszulösen.",
+  opts: ["Die Buchten mit Wasser reinigen","Intensive Fütterung rund ums Absetzen, um Brunst und Eisprung zu fördern","Spülen der Futterleitungen","Fütterung einstellen vor dem Decken"]
+},
+{ cat: "Schweine", sub: "Fortpflanzung",
+  q: "Wie lang dauert die Trächtigkeit beim Schwein durchschnittlich?",
+  a: "116 Tage (3 Monate, 3 Wochen, 3 Tage).",
+  opts: ["90 Tage","116 Tage (3 Monate, 3 Wochen, 3 Tage)","150 Tage","60 Tage"]
+},
+{ cat: "Schweine", sub: "Fortpflanzung",
+  q: "Was ist der optimale Zeitpunkt für die KB bei der Sau?",
+  a: "Bei Frührausche ca. 12 h nach Eberduldung besamen, danach evtl. Zweit- und Drittbesamung nach 12–16 h.",
+  opts: ["Sofort bei erster Brunstsymptomatik","Frührausche ca. 12 h nach Eberduldung, dann ggf. 2.+3. Besamung nach 12–16 h","Immer morgens um 8 Uhr","Nur einmal besamen"]
+},
+{ cat: "Schweine", sub: "Impfen",
+  q: "Wo wird beim Schwein die intramuskuläre Injektion gesetzt?",
+  a: "In den Hals, 5–7 cm hinter dem Ohr, horizontal (nach Moren-Methode).",
+  opts: ["In den Bauch","In den Hals, 5–7 cm hinter dem Ohr, horizontal","In die Schulter","In die Hinterhand"]
+},
+
+// --- GEFLÜGEL ---
+{ cat: "Geflügel", sub: "Haltung & Klima",
+  q: "Wie erkennt man eine gute Einstreuqualität im Mastpoulet-Stall?",
+  a: "Locker, trocken, nicht schimmlig, nicht verklebt oder nass. Feuchte Einstreu zeigt Lüftungs- oder Tränkenprobleme.",
+  opts: ["Einstreu muss nass sein für Hygiene","Locker, trocken, nicht schimmlig/verklebt/nass; feuchte Einstreu = Problem","Immer wechseln, egal ob trocken","Farbe muss weiss sein"]
+},
+{ cat: "Geflügel", sub: "Haltung & Klima",
+  q: "Wie werden Mastpoulets fachgerecht getötet?",
+  a: "Vorgängiges Betäuben, dann Durchtrennen des Halswirbels.",
+  opts: ["Einfach den Hals umdrehen","Vorgängig betäuben, dann Halswirbel durchtrennen","Durch Sauerstoffentzug","Mit Medikament"]
+},
+{ cat: "Geflügel", sub: "Fütterung",
+  q: "Welche Zusatzstoffe werden dem Geflügelfutter beigegeben?",
+  a: "Kokzidiostika, Magensteine, Pigmentstoffe (für Fleisch-/Eigelbfarbe).",
+  opts: ["Nur Salz","Kokzidiostika, Magensteine, Pigmentstoffe","Antibiotika täglich","Nur Vitamine"]
+},
+{ cat: "Geflügel", sub: "Legehennen",
+  q: "Ab welchem Gewicht gilt ein Ei als Normalei?",
+  a: "Ab 53 g. Leichtere Eier sind Nebensorten.",
+  opts: ["Ab 30 g","Ab 53 g","Ab 80 g","Gewicht ist egal"]
+},
+{ cat: "Geflügel", sub: "Legehennen",
+  q: "Wie werden Brucheier von Knickeiern unterschieden und wie entsorgt?",
+  a: "Knickeier: nur gerissene Schale → Eiprodukte/Aufschlag. Brucheier: verletzte Eihaut → hygienische Entsorgung.",
+  opts: ["Beide können verkauft werden","Knickeier (gerissene Schale) → Eiprodukte; Brucheier (verletzte Eihaut) → entsorgen","Knickeier entsorgen, Brucheier verkaufen","Kein Unterschied"]
+},
+{ cat: "Geflügel", sub: "Legehennen",
+  q: "Was sind mögliche Einschränkungen für den Auslauf ins Freie bei Legehennen?",
+  a: "Vor 10:00 Uhr, bis 23. Alterswoche, sehr tiefe Temperaturen oder schneebedeckte Umgebung (AKB). Weide: vor 13:00, starker Wind/Regen, Mauser.",
+  opts: ["Keine Einschränkungen","Vor 10 h, bis 23. AW, tiefe Temp., Schnee (AKB); vor 13 h, Wind/Regen, Mauser (Weide)","Nur bei Regen einschränken","Immer Auslauf ausser nachts"]
+},
+{ cat: "Geflügel", sub: "Hygiene",
+  q: "Warum muss Geflügelmist möglichst schnell nach dem Ausstallen entfernt werden?",
+  a: "Bevor er auskühlt, ist er leichter zu entfernen und die Keimbelastung bleibt beherrschbar.",
+  opts: ["Weil er nach einer Stunde giftig wird","Möglichst schnell, bevor er auskühlt – leichter entfernbar, geringere Keimbelastung","Nur im Sommer eilt es","Entfernen kann warten"]
+},
+
+// --- KLEINWIEDERKÄUER ---
+{ cat: "Kleinwiederkäuer", sub: "Haltung",
+  q: "Was unterscheidet die Lagerung von Ziegen/Schafen gegenüber Rindern?",
+  a: "Ziegen und Schafe brauchen trockene Liegeflächen (kein Knietest notwendig), Laufhof/Auslauf und trittsichere Böden.",
+  opts: ["Kein Unterschied","Trockene Liegeflächen, Laufhof/Auslauf, trittsichere Böden","Ziegen brauchen keine Einstreu","Nur Indoor-Haltung erlaubt"]
+},
+{ cat: "Kleinwiederkäuer", sub: "Melken",
+  q: "Welche Reinigungsmittel werden für die Melkanlage bei Schaf/Ziege eingesetzt?",
+  a: "Saure und alkalische Reinigungsmittel im Wechsel, PSA (persönliche Schutzausrüstung) tragen.",
+  opts: ["Nur Wasser","Saure und alkalische Reiniger im Wechsel, PSA tragen","Nur Essig","Handseife reicht"]
+},
+
+// --- PFERDE ---
+{ cat: "Pferde", sub: "Haltung",
+  q: "Was ist beim Tränken von Pferden besonders zu beachten?",
+  a: "Offene Wasserfläche, dauernde Verfügbarkeit, ausreichende Durchflussmenge, korrekte Anordnung und Höhe.",
+  opts: ["Pferde trinken selbst, keine Kontrolle nötig","Offene Wasserfläche, dauernde Verfügbarkeit, Durchflussmenge, Anordnung, Höhe","Einmal täglich tränken","Salzlecke reicht"]
+},
+{ cat: "Pferde", sub: "Haltung",
+  q: "Was versteht man unter 'Koppen' beim Pferd?",
+  a: "Eine Verhaltensstörung, bei der das Pferd Luft schluckt (oft mit Aufsetzen der Schneidezähne). Zeichen unzureichenden Wohlbefindens.",
+  opts: ["Normales Fressen","Verhaltensstörung: Luftschlucken, oft mit Auflegen der Schneidezähne – Zeichen von Stress","Ein Springfehler","Art der Fellpflege"]
+},
+{ cat: "Pferde", sub: "Transport",
+  q: "Was ist beim Verladen eines Pferdes in den Anhänger sicherheitstechnisch entscheidend?",
+  a: "Eine Hilfsperson muss die Abschlusssperre verriegeln, bevor das Pferd festgebunden wird. Keine Handschlaufen, Sicherheitsschuhe.",
+  opts: ["Alleine verladen, schnell geht's","Hilfsperson verriegelt Abschlusssperre vor dem Anbinden; keine Handschlaufen, Sicherheitsschuhe","Pferd mit Kraft hineinstossen","Abschlusssperre ist optional"]
+},
+
+// --- ALLGEMEIN: TIERWOHL & SICHERHEIT ---
+{ cat: "Allgemein", sub: "Sicherheit",
+  q: "Was ist bei der fachgerechten Entsorgung von Medikamentenleergebinden zu beachten?",
+  a: "Leergut fachgerecht entsorgen (nicht in Hauskehricht), Kanülen sicher verschliessen/wechseln/entsorgen, Hände waschen.",
+  opts: ["Einfach wegwerfen","Fachgerechte Entsorgung Leergut, Kanülen sicher verschliessen und entsorgen, Hände waschen","Im Stall lassen","Alles in Gülle geben"]
+},
+{ cat: "Allgemein", sub: "Tierwohl",
+  q: "Was versteht man unter BCS (Body Condition Score)?",
+  a: "Beurteilung des Ernährungszustands (Fettreserven) durch Betasten und Besehen von Rippen, Rücken und Becken. Skala z.B. 1–5.",
+  opts: ["Ein Fütterungscomputer","Beurteilung des Ernährungszustands durch Betasten/Besehen von Rippen, Rücken, Becken","Eine Krankheit","Ein Impfschema"]
+},
+{ cat: "Allgemein", sub: "Tierwohl",
+  q: "Was bedeutet Tierwohl im Zusammenhang mit Stallbau?",
+  a: "Genug Platz, trittsichere Böden, trockene Liegeflächen, frisches Wasser, artgerechte Sozialstruktur, ausreichend Licht und Luft.",
+  opts: ["Nur dass die Tiere satt sind","Platz, trittsichere Böden, trockene Liegeflächen, frisches Wasser, Sozialstruktur, Licht, Luft","Nur teure Gebäude","Nichts – Tierwohl ist nicht vorgeschrieben"]
+},
+{ cat: "Allgemein", sub: "Methoden",
+  q: "Was versteht man unter 'vernetztem Denken' in der Tierhaltung?",
+  a: "Zusammenhänge erkennen: z.B. schlechtes Stallklima → Atemwegsprobleme → Wachstumsverluste. Massnahmen in einem Bereich wirken auf andere.",
+  opts: ["Nutzung von Internet im Stall","Zusammenhänge erkennen: z.B. Stallklima→Gesundheit→Leistung","Mehrere Tiere gleichzeitig betreuen","Digitale Aufzeichnungen führen"]
+},
+];
+
+// ============================================================
+// STATE
+// ============================================================
+let activeCardCat = 'Alle';
+let activeQuizCat = 'Alle';
+let quizQuestions = [];
+let quizIdx = 0;
+let quizCorrect = 0;
+let quizAnswered = false;
+let catStats = {};
+
+const cats = ['Alle', ...new Set(data.map(d => d.cat))];
+
+// ============================================================
+// VIEWS
+// ============================================================
+function showView(name) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('view-' + name).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b => {
+    if (b.textContent.toLowerCase().includes(name === 'lernkarten' ? 'lern' : 'quiz')) b.classList.add('active');
+  });
+  if (name === 'quiz') showQuizSetup();
+}
+
+// ============================================================
+// LERNKARTEN
+// ============================================================
+function buildCardFilters() {
+  const el = document.getElementById('card-filters');
+  el.innerHTML = cats.map(c =>
+    `<button class="filter-btn ${c === activeCardCat ? 'active' : ''}" onclick="filterCards('${c}')">${c}</button>`
+  ).join('');
+}
+
+function filterCards(cat) {
+  activeCardCat = cat;
+  buildCardFilters();
+  renderCards();
+}
+
+function renderCards() {
+  const items = activeCardCat === 'Alle' ? data : data.filter(d => d.cat === activeCardCat);
+  document.getElementById('cards-count').textContent = items.length + ' Karten';
+  const grid = document.getElementById('cards-grid');
+  grid.innerHTML = items.map((d, i) => `
+    <div class="card" onclick="this.classList.toggle('flipped')">
+      <div class="card-inner">
+        <div class="card-front">
+          <div class="card-cat">${d.cat} · ${d.sub}</div>
+          <div class="card-q">${d.q}</div>
+          <div class="card-hint">Tippen zum Umdrehen</div>
+        </div>
+        <div class="card-back">
+          <div class="card-cat">${d.cat} · ${d.sub}</div>
+          <div class="card-a">${d.a}</div>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ============================================================
+// QUIZ
+// ============================================================
+function buildQuizFilters() {
+  const el = document.getElementById('quiz-filters');
+  el.innerHTML = cats.map(c =>
+    `<button class="filter-btn ${c === activeQuizCat ? 'active' : ''}" onclick="selectQuizCat('${c}')">${c}</button>`
+  ).join('');
+}
+
+function selectQuizCat(cat) {
+  activeQuizCat = cat;
+  buildQuizFilters();
+}
+
+function showQuizSetup() {
+  document.getElementById('quiz-setup').style.display = 'block';
+  document.getElementById('quiz-active').style.display = 'none';
+  document.getElementById('quiz-result').style.display = 'none';
+  buildQuizFilters();
+}
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function startQuiz() {
+  const pool = activeQuizCat === 'Alle' ? data : data.filter(d => d.cat === activeQuizCat);
+  quizQuestions = shuffle(pool).slice(0, Math.min(15, pool.length));
+  quizIdx = 0;
+  quizCorrect = 0;
+  catStats = {};
+  document.getElementById('quiz-setup').style.display = 'none';
+  document.getElementById('quiz-active').style.display = 'block';
+  document.getElementById('quiz-result').style.display = 'none';
+  renderQuestion();
+}
+
+function renderQuestion() {
+  const q = quizQuestions[quizIdx];
+  quizAnswered = false;
+  document.getElementById('qnum').textContent = `Frage ${quizIdx + 1} / ${quizQuestions.length}`;
+  document.getElementById('qlive').textContent = `${quizCorrect} / ${quizIdx}`;
+  document.getElementById('qprogress').style.width = `${(quizIdx / quizQuestions.length) * 100}%`;
+  document.getElementById('qcat').textContent = `${q.cat} · ${q.sub}`;
+  document.getElementById('qquestion').textContent = q.q;
+  document.getElementById('qnext').style.display = 'none';
+  const fb = document.getElementById('qfeedback');
+  fb.className = 'quiz-feedback';
+  fb.textContent = '';
+
+  const opts = shuffle(q.opts);
+  document.getElementById('qoptions').innerHTML = opts.map((o, i) =>
+    `<button class="quiz-opt" onclick="answer(this, ${o === q.opts[0]})">${o}</button>`
+  ).join('');
+}
+
+function answer(btn, correct) {
+  if (quizAnswered) return;
+  quizAnswered = true;
+  const q = quizQuestions[quizIdx];
+
+  document.querySelectorAll('.quiz-opt').forEach(b => b.disabled = true);
+
+  if (correct) {
+    btn.classList.add('correct');
+    quizCorrect++;
+    const fb = document.getElementById('qfeedback');
+    fb.className = 'quiz-feedback ok show';
+    fb.textContent = '✓ Richtig! ' + q.a;
+  } else {
+    btn.classList.add('wrong');
+    document.querySelectorAll('.quiz-opt').forEach(b => {
+      if (b.textContent === q.opts[0]) b.classList.add('correct');
+    });
+    const fb = document.getElementById('qfeedback');
+    fb.className = 'quiz-feedback nope show';
+    fb.textContent = '✗ Nicht ganz. Richtig: ' + q.a;
+  }
+
+  // Track per-category
+  if (!catStats[q.cat]) catStats[q.cat] = { right: 0, total: 0 };
+  catStats[q.cat].total++;
+  if (correct) catStats[q.cat].right++;
+
+  document.getElementById('qlive').textContent = `${quizCorrect} / ${quizIdx + 1}`;
+  document.getElementById('qnext').style.display = 'inline-block';
+}
+
+function nextQuestion() {
+  quizIdx++;
+  if (quizIdx >= quizQuestions.length) {
+    showResult();
+  } else {
+    renderQuestion();
+  }
+}
+
+function endQuiz() {
+  showQuizSetup();
+}
+
+function showResult() {
+  document.getElementById('quiz-active').style.display = 'none';
+  document.getElementById('quiz-result').style.display = 'block';
+  const pct = Math.round((quizCorrect / quizQuestions.length) * 100);
+  document.getElementById('rscore').textContent = pct + '%';
+  document.getElementById('rlabel').textContent = `${quizCorrect} von ${quizQuestions.length} Fragen richtig`;
+  document.getElementById('qprogress').style.width = '100%';
+
+  let note = '';
+  if (pct >= 80) note = 'Sehr gut! Du beherrschst die Themen sicher. Wiederhole gezielt die Bereiche mit Fehlern.';
+  else if (pct >= 60) note = 'Gut – noch etwas üben und du bist bereit für die Prüfung. Fokus auf die markierten Kategorien.';
+  else note = 'Weiter üben! Schau die Lernkarten nochmals durch, besonders die Kategorien mit vielen Fehlern.';
+  document.getElementById('rnote').textContent = note;
+
+  const chips = Object.entries(catStats).map(([cat, stat]) => {
+    const p = stat.total > 0 ? stat.right / stat.total : 0;
+    const cls = p >= 0.75 ? 'good' : p >= 0.5 ? 'mid' : 'low';
+    return `<span class="result-cat-chip ${cls}">${cat}: ${stat.right}/${stat.total}</span>`;
+  }).join('');
+  document.getElementById('rcats').innerHTML = chips;
+}
+
+// ============================================================
+// INIT
+// ============================================================
+buildCardFilters();
+renderCards();
+buildQuizFilters();
+</script>
+</body>
+</html>
